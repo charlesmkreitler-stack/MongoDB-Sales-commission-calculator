@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commission Calculator</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #10b981;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.5);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #10b981;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+        
+        const DollarSign = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <line x1="12" y1="1" x2="12" y2="23"></line>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+        );
+        
+        const TrendingUp = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+        );
+
+        // Helper function to format numbers with commas
+        const formatNumber = (num) => {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        };
+
+        // Helper function to parse comma-formatted numbers
+        const parseFormattedNumber = (str) => {
+            return parseInt(str.replace(/,/g, '')) || 0;
+        };
+
+        function InteractiveAttainmentSlider({ baseSalary, ote, annualQuota, calculateCommission }) {
+            const [selectedAttainment, setSelectedAttainment] = useState(100);
+            
+            const earnedCommission = calculateCommission(selectedAttainment);
+            const totalEarnings = baseSalary + earnedCommission;
+            const narrClosed = ((annualQuota * selectedAttainment) / 100).toFixed(2);
+            
+            return (
+                <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl shadow-2xl p-6 text-white">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="bg-white/20 rounded-full p-2">
+                            <TrendingUp className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold">Interactive Attainment Calculator</h2>
+                            <p className="text-sm text-white/80">Drag the slider to see your earnings at any level</p>
+                        </div>
+                    </div>
+                    
+                    <div className="mb-6">
+                        <div className="flex justify-between items-center mb-3">
+                            <span className="text-sm font-medium">Attainment Level</span>
+                            <span className="text-3xl font-bold">{selectedAttainment}%</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="0"
+                            max="500"
+                            step="5"
+                            value={selectedAttainment}
+                            onChange={(e) => setSelectedAttainment(Number(e.target.value))}
+                            className="w-full h-3 bg-white/20 rounded-lg cursor-pointer"
+                        />
+                        <div className="flex justify-between text-xs text-white/70 mt-1">
+                            <span>0%</span>
+                            <span>100%</span>
+                            <span>200%</span>
+                            <span>300%</span>
+                            <span>400%</span>
+                            <span>500%</span>
+                        </div>
+                    </div>
+                    
+                    <div className="mb-6">
+                        <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
+                            <div className="text-sm text-white/80 mb-1">NARR Closed</div>
+                            <div className="text-3xl font-bold">${narrClosed}M</div>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-white rounded-xl p-6 text-slate-800">
+                        <div className="text-sm font-semibold text-slate-600 mb-2">Your Total Earnings</div>
+                        <div className="text-5xl font-bold text-green-600 mb-4">
+                            ${formatNumber((totalEarnings / 1000).toFixed(0))}K
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200">
+                            <div>
+                                <div className="text-xs text-slate-500">Base Salary</div>
+                                <div className="text-xl font-bold text-slate-700">${formatNumber((baseSalary / 1000).toFixed(0))}K</div>
+                            </div>
+                            <div>
+                                <div className="text-xs text-slate-500">Commission</div>
+                                <div className="text-xl font-bold text-green-600">${formatNumber((earnedCommission / 1000).toFixed(0))}K</div>
+                            </div>
+                        </div>
+                        
+                        {selectedAttainment >= 200 && (
+                            <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                                <div className="text-sm font-bold text-green-800">🔥 Outstanding Performance!</div>
+                                <div className="text-xs text-green-700 mt-1">You're in the top tier of performers</div>
+                            </div>
+                        )}
+                        
+                        {selectedAttainment >= 100 && selectedAttainment < 200 && (
+                            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                                <div className="text-sm font-bold text-blue-800">✓ On Track to Hit Quota</div>
+                                <div className="text-xs text-blue-700 mt-1">Keep up the great work!</div>
+                            </div>
+                        )}
+                        
+                        {selectedAttainment < 100 && (
+                            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
+                                <div className="text-sm font-bold text-amber-800">Below Quota Target</div>
+                                <div className="text-xs text-amber-700 mt-1">Need ${((annualQuota * (100 - selectedAttainment)) / 100).toFixed(2)}M more to hit 100%</div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function CommissionCalculator() {
+            const [baseSalaryInput, setBaseSalaryInput] = useState("80,000");
+            const [oteInput, setOteInput] = useState("160,000");
+            const [annualQuota, setAnnualQuota] = useState(2.5);
+            
+            const baseSalary = parseFormattedNumber(baseSalaryInput);
+            const ote = parseFormattedNumber(oteInput);
+            
+            const [commissionTiers, setCommissionTiers] = useState([
+                { minPercent: 100, maxPercent: 125, rate: 3.84, label: 'Tier 1 (100-125%)' },
+                { minPercent: 125, maxPercent: 150, rate: 4.8, label: 'Tier 2 (125-150%)' },
+                { minPercent: 150, maxPercent: 175, rate: 6.4, label: 'Tier 3 (150-175%)' },
+                { minPercent: 175, maxPercent: 200, rate: 8.0, label: 'Tier 4 (175%+)' }
+            ]);
+            
+            const quotaRevenue = annualQuota * 1000000;
+            const targetCommission = ote - baseSalary;
+            const baseRate = quotaRevenue > 0 ? (targetCommission / quotaRevenue) * 100 : 0;
+            
+            const baseTier = { minPercent: 0, maxPercent: 100, rate: baseRate, label: 'Base Tier (0-100%)' };
+            const allTiers = [baseTier, ...commissionTiers];
+
+            const calculateCommission = (attainmentPercent) => {
+                let earnedCommission = 0;
+                
+                allTiers.forEach((tier) => {
+                    const tierMin = (quotaRevenue * tier.minPercent) / 100;
+                    const tierMax = (quotaRevenue * Math.min(tier.maxPercent, attainmentPercent)) / 100;
+                    const tierRevenue = Math.max(0, tierMax - tierMin);
+                    
+                    if (tierRevenue > 0) {
+                        earnedCommission += tierRevenue * (tier.rate / 100);
+                    }
+                });
+                
+                return earnedCommission;
+            };
+
+            const commissionAt100 = ote - baseSalary;
+            const attainmentLevels = [50, 75, 100, 110, 125, 150, 175, 200];
+
+            const handleBaseSalaryChange = (e) => {
+                const value = e.target.value.replace(/,/g, '');
+                if (/^\d*$/.test(value)) {
+                    setBaseSalaryInput(value ? formatNumber(value) : "");
+                }
+            };
+
+            const handleOteChange = (e) => {
+                const value = e.target.value.replace(/,/g, '');
+                if (/^\d*$/.test(value)) {
+                    setOteInput(value ? formatNumber(value) : "");
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-4 md:p-8">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+                            <div className="flex items-center gap-3 mb-2">
+                                <DollarSign className="w-10 h-10 text-green-600" />
+                                <h1 className="text-3xl md:text-4xl font-bold text-slate-800">Commission Calculator</h1>
+                            </div>
+                            <p className="text-slate-600">Calculate your total compensation at different performance levels</p>
+                        </div>
+
+                        <div className="grid lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-2 space-y-6">
+                                
+                                <div className="bg-white rounded-2xl shadow-lg p-6">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-lg">1</div>
+                                        <div>
+                                            <h2 className="text-xl font-bold text-slate-800">Your Compensation Plan & Quota</h2>
+                                            <p className="text-sm text-slate-600">Enter these first - everything else will auto-calculate</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">Base Salary (Annual)</label>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-lg font-bold text-slate-700">$</span>
+                                                <input 
+                                                    type="text" 
+                                                    value={baseSalaryInput}
+                                                    onChange={handleBaseSalaryChange}
+                                                    className="flex-1 text-xl font-bold border-2 border-slate-300 rounded-lg px-3 py-2 focus:border-green-500 focus:outline-none" 
+                                                    placeholder="80,000"
+                                                />
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-1">Your guaranteed annual pay</p>
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">OTE - On Target Earnings</label>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-lg font-bold text-slate-700">$</span>
+                                                <input 
+                                                    type="text" 
+                                                    value={oteInput}
+                                                    onChange={handleOteChange}
+                                                    className="flex-1 text-xl font-bold border-2 border-slate-300 rounded-lg px-3 py-2 focus:border-green-500 focus:outline-none" 
+                                                    placeholder="160,000"
+                                                />
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-1">Total pay at 100% of quota</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Your Annual NARR Quota</label>
+                                        <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-5 text-white">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-3xl font-bold">$</span>
+                                                <input type="number" min="0.1" max="20" step="0.1" value={annualQuota}
+                                                    onChange={(e) => setAnnualQuota(Number(e.target.value))}
+                                                    className="w-48 text-3xl font-bold bg-white/20 border-2 border-white/30 rounded-lg px-3 py-2 text-white focus:bg-white/30 focus:outline-none" />
+                                                <span className="text-3xl font-bold">M</span>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-2">What revenue you need to close to hit 100%</p>
+                                    </div>
+                                    
+                                    <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-semibold text-slate-700">Commission at 100% quota:</span>
+                                            <span className="text-2xl font-bold text-green-600">${formatNumber(commissionAt100)}</span>
+                                        </div>
+                                        <div className="text-xs text-slate-600 mt-2">
+                                            Base commission rate needed: <span className="font-bold text-green-700">{baseRate.toFixed(2)}%</span> of NARR
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white rounded-2xl shadow-lg p-6">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-lg">2</div>
+                                        <div>
+                                            <h2 className="text-xl font-bold text-slate-800">Commission Tier Structure</h2>
+                                            <p className="text-sm text-slate-600">Set your commission rates as % of NARR for each tier</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                                        💡 <strong>How this works:</strong> Your base tier rate is auto-calculated to ensure you hit OTE at 100% quota. 
+                                        Then set accelerator rates (as % of NARR) for each tier above 100%. Higher rates = bigger rewards for exceeding quota!
+                                    </div>
+                                    
+                                    <div className="border-2 border-green-500 bg-green-50 rounded-xl p-5 mb-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="text-sm font-bold text-green-900">{baseTier.label}</div>
+                                            <div className="bg-green-600 text-white text-xs px-3 py-1 rounded-full font-bold">AUTO-CALCULATED</div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div className="bg-white rounded-lg p-3">
+                                                <div className="text-xs text-slate-600 mb-1">From %</div>
+                                                <div className="text-lg font-bold text-slate-800">{baseTier.minPercent}%</div>
+                                            </div>
+                                            <div className="bg-white rounded-lg p-3">
+                                                <div className="text-xs text-slate-600 mb-1">To %</div>
+                                                <div className="text-lg font-bold text-slate-800">{baseTier.maxPercent}%</div>
+                                            </div>
+                                            <div className="bg-white rounded-lg p-3">
+                                                <div className="text-xs text-slate-600 mb-1">Rate (% of NARR)</div>
+                                                <div className="text-lg font-bold text-green-600">{baseTier.rate.toFixed(2)}%</div>
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-green-800 mt-3 bg-white rounded p-2">
+                                            ✓ This rate ensures you earn <strong>${formatNumber((targetCommission / 1000).toFixed(0))}K commission</strong> at 100% quota (hitting your ${formatNumber((ote / 1000).toFixed(0))}K OTE)
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="text-sm font-semibold text-slate-700 mb-3">Accelerator Tiers (Editable)</div>
+                                    <div className="space-y-4">
+                                        {commissionTiers.map((tier, index) => (
+                                            <div key={index} className="border-2 border-slate-200 rounded-lg p-4 hover:border-green-300 transition">
+                                                <div className="text-sm font-semibold text-slate-700 mb-3">{tier.label}</div>
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    <div>
+                                                        <label className="text-xs text-slate-600 mb-1 block">From %</label>
+                                                        <input type="number" min="0" max="200" step="5" value={tier.minPercent}
+                                                            onChange={(e) => {
+                                                                const newTiers = [...commissionTiers];
+                                                                newTiers[index].minPercent = Number(e.target.value);
+                                                                setCommissionTiers(newTiers);
+                                                            }}
+                                                            className="w-full text-sm border-2 border-slate-300 rounded px-2 py-1 focus:border-green-500 focus:outline-none" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs text-slate-600 mb-1 block">To %</label>
+                                                        <input type="number" min="0" max="200" step="5" value={tier.maxPercent}
+                                                            onChange={(e) => {
+                                                                const newTiers = [...commissionTiers];
+                                                                newTiers[index].maxPercent = Number(e.target.value);
+                                                                setCommissionTiers(newTiers);
+                                                            }}
+                                                            className="w-full text-sm border-2 border-slate-300 rounded px-2 py-1 focus:border-green-500 focus:outline-none" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs text-slate-600 mb-1 block">Rate (% of NARR)</label>
+                                                        <input type="number" min="0" max="20" step="0.01" value={tier.rate}
+                                                            onChange={(e) => {
+                                                                const newTiers = [...commissionTiers];
+                                                                newTiers[index].rate = Number(e.target.value);
+                                                                setCommissionTiers(newTiers);
+                                                            }}
+                                                            className="w-full text-sm border-2 border-slate-300 rounded px-2 py-1 focus:border-green-500 focus:outline-none" placeholder="3.2" />
+                                                    </div>
+                                                </div>
+                                                <div className="text-xs text-slate-500 mt-2">
+                                                    You earn <span className="font-semibold">{tier.rate}%</span> commission on revenue between <span className="font-semibold">{tier.minPercent}%</span> and <span className="font-semibold">{tier.maxPercent}%</span> of quota
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="bg-white rounded-2xl shadow-lg p-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <TrendingUp className="w-6 h-6 text-green-600" />
+                                        <h2 className="text-xl font-bold text-slate-800">What You'll Earn at Different Attainment Levels</h2>
+                                    </div>
+                                    <p className="text-sm text-slate-600 mb-6">See how your total compensation changes based on performance</p>
+                                    
+                                    <div className="space-y-3">
+                                        {attainmentLevels.map((attainmentPercent) => {
+                                            const earnedCommission = calculateCommission(attainmentPercent);
+                                            const totalEarnings = baseSalary + earnedCommission;
+                                            const vsOTE = ((totalEarnings / ote) * 100).toFixed(0);
+                                            const narrClosed = ((annualQuota * attainmentPercent) / 100).toFixed(2);
+                                            
+                                            return (
+                                                <div key={attainmentPercent} className={`border-2 rounded-lg p-4 transition-all ${
+                                                    attainmentPercent === 100 ? 'border-green-500 bg-green-50 shadow-md' : 'border-slate-200 hover:border-green-300'
+                                                }`}>
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="text-lg font-bold text-slate-800">{attainmentPercent}% Attainment</span>
+                                                                {attainmentPercent === 100 && (
+                                                                    <span className="text-xs bg-green-600 text-white px-2 py-1 rounded-full font-semibold">AT QUOTA</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-sm text-slate-600">${narrClosed}M NARR closed</div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className="text-3xl font-bold text-green-600">${formatNumber((totalEarnings / 1000).toFixed(0))}K</div>
+                                                            <div className="text-xs text-slate-500 mt-1">{vsOTE}% of OTE</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="mt-3 pt-3 border-t border-slate-200 flex justify-between text-sm text-slate-600">
+                                                        <span>${formatNumber((baseSalary / 1000).toFixed(0))}K base</span>
+                                                        <span className="font-semibold text-green-700">+${formatNumber((earnedCommission / 1000).toFixed(0))}K commission</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <InteractiveAttainmentSlider 
+                                    baseSalary={baseSalary}
+                                    ote={ote}
+                                    annualQuota={annualQuota}
+                                    calculateCommission={calculateCommission}
+                                />
+                            </div>
+
+                            <div className="lg:col-span-1">
+                                <div className="sticky top-8 space-y-4">
+                                    <div className="bg-gradient-to-br from-green-600 to-emerald-700 rounded-2xl shadow-2xl p-6 text-white">
+                                        <div className="text-sm opacity-90 mb-2">💰 AT 100% QUOTA</div>
+                                        <div className="text-5xl font-bold mb-3">${formatNumber((ote / 1000).toFixed(0))}K</div>
+                                        <div className="text-lg mb-4">Total Earnings</div>
+                                        <div className="bg-white/20 rounded-lg p-4 text-sm space-y-2">
+                                            <div className="flex justify-between">
+                                                <span className="opacity-90">Base Salary:</span>
+                                                <span className="font-bold">${formatNumber((baseSalary / 1000).toFixed(0))}K</span>
+                                            </div>
+                                            <div className="flex justify-between border-t border-white/30 pt-2">
+                                                <span className="opacity-90">Commission:</span>
+                                                <span className="font-bold">${formatNumber((commissionAt100 / 1000).toFixed(0))}K</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-2xl shadow-lg p-5">
+                                        <div className="text-sm font-semibold text-slate-700 mb-4">💡 Quick Tips</div>
+                                        <div className="space-y-3 text-sm text-slate-600">
+                                            <div className="flex gap-2">
+                                                <span className="text-green-600">📊</span>
+                                                <span>Higher tiers = accelerated earnings above quota</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <span className="text-green-600">🎯</span>
+                                                <span>100% quota gets you to OTE</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <span className="text-green-600">💪</span>
+                                                <span>125%+ is where commission really accelerates</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <span className="text-green-600">🔥</span>
+                                                <span>Track monthly to stay on pace</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <span className="text-green-600">📈</span>
+                                                <span>Top performers often reach 150%+</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-5">
+                                        <div className="text-sm font-semibold text-blue-900 mb-3">Commission Breakdown (at 100%)</div>
+                                        <div className="space-y-3">
+                                            {allTiers.map((tier, index) => {
+                                                const tierMin = (quotaRevenue * tier.minPercent) / 100;
+                                                const tierMax = (quotaRevenue * Math.min(tier.maxPercent, 100)) / 100;
+                                                const tierRevenue = Math.max(0, tierMax - tierMin);
+                                                const tierCommission = tierRevenue * (tier.rate / 100);
+                                                
+                                                if (tierRevenue > 0) {
+                                                    return (
+                                                        <div key={index} className="text-xs">
+                                                            <div className="flex justify-between font-semibold text-blue-900 mb-1">
+                                                                <span>{tier.label}</span>
+                                                                <span>${(tierCommission / 1000).toFixed(1)}K</span>
+                                                            </div>
+                                                            <div className="text-blue-700">
+                                                                ${(tierRevenue / 1000000).toFixed(2)}M × {tier.rate.toFixed(2)}%
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })}
+                                            <div className="pt-3 border-t-2 border-blue-300 flex justify-between font-bold text-blue-900">
+                                                <span>Total</span>
+                                                <span>${formatNumber((commissionAt100 / 1000).toFixed(0))}K</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<CommissionCalculator />, document.getElementById('root'));
+    </script>
+</body>
+</html>
